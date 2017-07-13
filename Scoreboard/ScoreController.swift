@@ -11,16 +11,23 @@ import Foundation
 // ScoreController creates, updates, and removes players
 class ScoreController {
 
+    // NSUSERDEFAULTS
+    private static let PlayersKey = "players" // Key to retrieve from NSUserDefaults
+    
     // SharedInstance makes certain there is only one ScoreController
     // This way we don't have any errors in our data
     static let sharedInstance = ScoreController()
     
-    var players:[Player]
+    
+    // NSUSERDEFAULTS *** UPDATE ***
+    // Now we are pulling from memory we change the way "Players" is initiated
+    private(set) var players = [Player]()
     
     // Function called when we start the app (ScoreController created)
     init() {
-        // Sets Players to an empty array
-        players = []
+
+        // NSUSERDEFAULTS
+        loadFromPersistentStorage()
     }
     
     // Creates a new player and adds it to the list of Players
@@ -28,6 +35,8 @@ class ScoreController {
     func createNewPlayer(name:String) {
         let player = Player(name: name)
         players.append(player)
+        // NSUSERDEFAULTS
+        saveToPersistentStorage()
     }
     
     // Updates a player's details
@@ -41,6 +50,8 @@ class ScoreController {
             // Update details
             editPlayer.name = name
             editPlayer.score = score
+            // NSUSERDEFAULTS
+            saveToPersistentStorage()
         }
     }
     
@@ -51,7 +62,35 @@ class ScoreController {
         // Find where the player is in the list
         if let index = players.index(of: player) {
             players.remove(at: index)
+            // NSUSERDEFAULTS
+            saveToPersistentStorage()
         }
     }
+    
+    
+    
+    //MARK: -  NSUserDefaults
+    
+    // NSUSERDEFAULTS
+    // Retrieve players from memory
+    private func loadFromPersistentStorage() {
+        let playerDictionariesFromDefaults = UserDefaults.standard.object(forKey: ScoreController.PlayersKey) as? [[String : Any]]
+        if let playerDictionaries = playerDictionariesFromDefaults {
+            for player in playerDictionaries {
+                if let player = Player(dictionary: player) {
+                    players.append(player)
+                }
+            }
+        }
+    }
+    
+    // NSUSERDEFAULTS
+    // Save players to memory
+    private func saveToPersistentStorage() {
+        // * Creates an array of Player dictionaries using "map"
+        let playerDictionaries = players.map { $0.dictionaryRepresentation() }
+        UserDefaults.standard.set(playerDictionaries, forKey: ScoreController.PlayersKey)
+    }
+    
     
 }
